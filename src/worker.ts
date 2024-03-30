@@ -1,9 +1,9 @@
-import { Env } from './env';
-import handlers from './handlers';
 import { Toucan } from 'toucan-js';
-import { CACHE_HEADERS } from './constants/cache';
-import { METHOD_NOT_ALLOWED } from './constants/commonResponses';
+import { Env } from './env';
 import { Context } from './context';
+import renderInternalServerError from './responses/internalServerError';
+import { METHOD_NOT_ALLOWED } from './constants/commonResponses';
+import handlers from './handlers';
 
 interface Worker {
   /**
@@ -14,11 +14,11 @@ interface Worker {
 }
 
 const cloudflareWorker: Worker = {
-  fetch: async (request, env, ctx) => {
+  fetch: async (request, env, execution) => {
     const sentry = new Toucan({
       dsn: env.SENTRY_DSN,
       request,
-      context: ctx,
+      context: execution,
       requestDataOptions: {
         allowedHeaders: true,
         allowedIps: true,
@@ -26,39 +26,28 @@ const cloudflareWorker: Worker = {
     });
 
     try {
-      const context: Context = {
-        sentry,
+      const ctx: Context = {
         env,
-        execution: ctx,
+        execution,
+        sentry,
       };
+
       switch (request.method) {
-        case 'HEAD':
         case 'GET':
-          return await handlers.get(request, context);
+          return await handlers.get(request, ctx);
+        case 'HEAD':
+          return await handlers.head(request, ctx);
         case 'POST':
-          return await handlers.post(request, context);
+          return await handlers.post(request, ctx);
         case 'OPTIONS':
-          return await handlers.options(request, context);
+          return await handlers.options(request, ctx);
         default:
           return METHOD_NOT_ALLOWED;
       }
     } catch (e) {
-      // Send to sentry, if it's disabled this will just noop
       sentry.captureException(e);
 
-      let responseBody = 'Internal Server Error';
-
-      if (
-        (env.ENVIRONMENT === 'dev' || env.ENVIRONMENT === 'e2e-tests') &&
-        e instanceof Error
-      ) {
-        responseBody += `\nMessage: ${e.message}\nStack trace: ${e.stack}`;
-      }
-
-      return new Response(responseBody, {
-        status: 500,
-        headers: { 'cache-control': CACHE_HEADERS.failure },
-      });
+      return renderInternalServerError(e, env);
     }
   },
 };

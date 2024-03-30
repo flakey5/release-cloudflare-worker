@@ -5,7 +5,7 @@ import {
   mapBucketPathToUrlPath,
   mapUrlPathToBucketPath,
   niceBytes,
-} from '../../src/util';
+} from '../../src/utils/object';
 import { REDIRECT_MAP } from '../../src/constants/r2Prefixes';
 
 describe('mapUrlPathToBucketPath', () => {

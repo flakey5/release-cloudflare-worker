@@ -1,29 +1,15 @@
 export interface Env {
-  /**
-   * Environment the worker is running in
-   */
-  ENVIRONMENT: 'dev' | 'staging' | 'prod' | 'e2e-tests';
-  /**
-   * R2 bucket we read from
-   */
-  R2_BUCKET: R2Bucket;
-  /**
-   * Endpoint to hit when using the S3 api.
-   */
-  S3_ENDPOINT: string;
-  /**
-   * Id of the api token used for the S3 api.
-   * The token needs >=Object Read only permissions
-   */
-  S3_ACCESS_KEY_ID: string;
-  /**
-   * Secret of the api token used for the S3 api
-   */
-  S3_ACCESS_KEY_SECRET: string;
-  /**
-   * Bucket name
-   */
+  ENVIRONMENT: 'e2e-tests' | 'dev' | 'staging' | 'prod';
+  CACHING: boolean;
+
   BUCKET_NAME: string;
+
+  R2_BUCKET: R2Bucket;
+
+  S3_ENDPOINT: string;
+  S3_ACCESS_KEY_ID: string;
+  S3_ACCESS_KEY_SECRET: string;
+
   /**
    * Directory listing toggle
    *  on - Enabled for all paths
@@ -32,22 +18,20 @@ export interface Env {
    * In prod, this should *always* be restricted
    */
   DIRECTORY_LISTING: 'on' | 'restricted' | 'off';
-  /**
-   * Api key for /_cf/cache-purge. If undefined, the endpoint is disabled.
-   */
+
   CACHE_PURGE_API_KEY?: string;
-  /**
-   * Sentry DSN, used for error monitoring
-   * If missing, Sentry isn't used
-   */
+
   SENTRY_DSN?: string;
+
   /**
-   * If true and all retries to R2 fail, we will rewrite the request to
-   *  https://direct.nodejs.org
+   * The {@link Provider} that is used first
    */
-  USE_FALLBACK_WHEN_R2_FAILS: boolean;
+  PRIMARY_PROVIDER: 'r2' | 'origin';
+
   /**
-   * Host for the www/Digital Ocean/origin server
+   * The {@link Provider} used if the {@link PRIMARY_PROVIDER} fails
    */
-  FALLBACK_HOST: string;
+  FALLBACK_PROVIDER?: 'origin';
+
+  ORIGIN_HOST: string;
 }
